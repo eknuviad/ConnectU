@@ -3,6 +3,7 @@ package ca.mchacks.connectu;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
@@ -15,7 +16,7 @@ public class ConnectU extends AppCompatActivity {
     private TextView Info;
     private Switch Login; //or connect. This refers to the switch connect button
     private int counter = 5;
-
+    private TextView userRegistration;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -25,6 +26,7 @@ public class ConnectU extends AppCompatActivity {
         Password = (EditText)findViewById(R.id.editTextPassword);
         Info = (TextView) findViewById(R.id.textviewInfo);
         Login = (Switch) findViewById(R.id.switchConnect);
+        userRegistration = (TextView) findViewById(R.id.textViewRegister);
 
         Info.setText("No of items remaining is 5");
 
@@ -34,6 +36,13 @@ public class ConnectU extends AppCompatActivity {
                 if(isChecked) {
                     validate(Name.getText().toString(), Password.getText().toString());
                 }
+            }
+        });
+
+        userRegistration.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(ConnectU.this, RegistrationActivity.class));
             }
         });
     }
