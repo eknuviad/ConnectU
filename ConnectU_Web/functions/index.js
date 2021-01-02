@@ -25,6 +25,8 @@ const express = require('express');
 const app = express()
 
 
+/****User APIs ****/
+
 //Signup route
 let token, userId
 app.post('/signup', (req,res)=>{
@@ -35,6 +37,9 @@ app.post('/signup', (req,res)=>{
         userName: req.body.userName,
     };
     //TODO validate data
+    //need to ensure that the password and username not empty
+    //and that the two passwords match
+
     db.collection('users').doc(`${newUser.userName}`).get()
         .then(doc=>{
             if(doc.exists){
@@ -70,7 +75,29 @@ app.post('/signup', (req,res)=>{
         })
 });
 
+app.post('/login', (req, res) =>{
+    const user = {
+        email: req.body.email,
+        password: req.body.password
+    };
 
+    //TODO check that it isnt empty
+    
+    firebase.auth().signInWithEmailAndPassword(user.email, user.password)
+        .then(data =>{
+            return data.user.getIdToken();
+        })
+        .then(token =>{
+            return res.status(200).json({token});
+        })
+        .catch(err =>{
+            console.error(err);
+            // if(err.code === 'auth/wrong-password'){
+            //     return res.status(403).json({general: 'Wrong credentials, please try again'});
+            // }
+            return res.status(500).json({error: err.code})
+        })
+})
 
 //Connection APIs
 app.get('/connections', (req, res) => {
@@ -118,12 +145,6 @@ app.post('/connection', (req, res) => {
 app.post('/question', (req,res)=>{
 
 })
-
-
-
-
-//User APIs
-
 
 
 
