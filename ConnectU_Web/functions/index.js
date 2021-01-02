@@ -6,18 +6,8 @@ const { database } = require('firebase-admin');
 admin.initializeApp();
 const db = admin.firestore()
 
+const firebaseConfig = require('./util/config');
 const firebase = require('firebase')
-// Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyBhK-w4mrwTqS58ky4AP6_IvDe_QgeJxzQ",
-    authDomain: "connectu-90578.firebaseapp.com",
-    projectId: "connectu-90578",
-    storageBucket: "connectu-90578.appspot.com",
-    messagingSenderId: "676134639577",
-    appId: "1:676134639577:web:d1bfea934c84fa3795abc8",
-    measurementId: "G-N5P0RMHE0E"
-  };
 firebase.initializeApp(firebaseConfig)
 
 //initialise express app
@@ -119,14 +109,46 @@ app.get('/connections', (req, res) => {
         .catch(error => console.error);
 })
 
-app.post('/connection', (req, res) => {
+//middleware authentication
+const FBAuth = (req, res, next) => {
+    let idToken;
+    if(req.headers.authorization && req.headers.authorization.startsWith('Bearer ')){
+        idToken = req.headers.authorization.split('Bearer ')[1]; //take second element which will be token
+    }else{
+        console.error('No token found')
+        return res.status(403).json({error: 'Unauthorized'});
+    }
+
+    admin.auth().verifyIdToken(idToken)
+        .then(decodedToken => { //holds data thats inside token ie userDATA
+            req.user = decodedToken;
+            console.log(decodedToken)
+            return db.collection('users')
+                .where('userId', '==', req.user.uid)
+                .limit(1)
+                .get();
+        })
+        .then(data => {
+            req.user.userName = data.docs[0].data().userName;
+            return next();
+        })
+        .catch(err =>{
+            console.error('Error while verifying token ', err);
+            return res.status(403).json(err);
+        })
+}
+
+app.post('/connection', FBAuth, (req, res) => {
     const newConnection =  {
-        sender: req.body.sender,
+        sender: req.user.userName,
         recipient: req.body.recipient,
         createdDate: admin.firestore.Timestamp.fromDate(new Date()),
         status: req.body.status,
         isConnected: req.body.isConnected
     };
+
+    //TODO validation that no connection has been sent to recipient already
+    //read ifrebase documentation for simple query
     //write/add to database
     db.collection('connections').add(newConnection)
         .then(doc => {
