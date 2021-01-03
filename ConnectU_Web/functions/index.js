@@ -152,7 +152,7 @@ app.post('/connection', FBAuth, (req, res) => {
     //write/add to database
     db.collection('connections').add(newConnection)
         .then(doc => {
-            return res.json ({message: `document ${doc.id} created successfully`});
+            return res.json ({message: `connection ${doc.id} created successfully`});
         })
         .catch(err =>{
             res.status(500).json({
@@ -164,8 +164,23 @@ app.post('/connection', FBAuth, (req, res) => {
 
 
 //Questions APIs
-app.post('/question', (req,res)=>{
+app.post('/question', FBAuth, (req,res)=>{
+    const newQuestion = {
+        question: req.body.question,
+        answer: req.body.answer,
+        sender: req.user.userName
+    }
 
+    db.collection('questions').add(newQuestion)
+        .then(doc => {
+            return res.json ({message: `question ${doc.id} created successfully`})
+        })
+        .catch(err =>{
+            console.error(err)
+            return res.status(500).json({
+                error: `Failed to add new question`
+            })
+        })
 })
 
 
