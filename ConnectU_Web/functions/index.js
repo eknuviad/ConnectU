@@ -1,8 +1,8 @@
 const functions = require('firebase-functions');
-const admin = require('firebase-admin');
 const { database } = require('firebase-admin');
 
 //initialise firebase admin rights
+const admin = require('firebase-admin');
 admin.initializeApp();
 const db = admin.firestore()
 
@@ -14,6 +14,8 @@ firebase.initializeApp(firebaseConfig)
 const express = require('express');
 const app = express()
 
+const cors = require("cors");
+app.use(cors({origin: true })); //to ensure that server works on cross platform
 
 /****User APIs ****/
 
@@ -161,6 +163,23 @@ app.post('/connection', FBAuth, (req, res) => {
             console.error(err);
         })
 });
+
+//update a connection
+app.put('/connection', FBAuth, (req,res)=>{
+    db.collection("connections").doc(`${req.body.connectionId}`).update({
+        isConnected: req.body.isConnected,
+        status: req.body.status
+    })
+    .then(()=>{
+        return res.status(200).json({message: `successfully updated connection ${req.body.connectionId}`})
+    })
+    .catch(err =>{
+        console.log(err);
+        return res.status(500).json({
+            error: `Failed to update connection ${req.body.connectionId}`
+        })
+    })
+})
 
 
 //Questions APIs
