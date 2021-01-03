@@ -184,6 +184,28 @@ app.post('/question', FBAuth, (req,res)=>{
 })
 
 
+app.get('/question', FBAuth, (req,res)=>{
+    db.collection('questions')
+        .where('sender', '==', req.user.userName).get()
+        .then(snapShot =>{
+            let questionsData = [];
+            snapShot.forEach(doc =>{
+                console.log(doc.id, "=>", doc.data());
+                questionsData.push({
+                    questionId: doc.id,
+                    ...doc.data()
+                });
+            });
+            return res.json(questionsData)
+        })
+        .catch(err =>{
+            console.log(err);
+            return res.status(404).json({
+                error: `No questions found for ${req.user.userName}`
+            })
+        })
+})
+
 
 
 
