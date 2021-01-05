@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "connectu-90578"
+    "default": "connectu-90578",
+    "connectU": "connectu-90578"
   }
 }
