@@ -19,6 +19,35 @@ app.use(cors({origin: true })); //to ensure that server works on cross platform
 
 /****User APIs ****/
 
+//middleware authentication
+const FBAuth = (req, res, next) => {
+    let idToken;
+    if(req.headers.authorization && req.headers.authorization.startsWith('Bearer ')){
+        idToken = req.headers.authorization.split('Bearer ')[1]; //take second element which will be token
+    }else{
+        console.error('No token found')
+        return res.status(403).json({error: 'Unauthorized'});
+    }
+
+    admin.auth().verifyIdToken(idToken)
+        .then(decodedToken => { //holds data thats inside token ie userDATA
+            req.user = decodedToken;
+            console.log(decodedToken)
+            return db.collection('users')
+                .where('userId', '==', req.user.uid)
+                .limit(1)
+                .get();
+        })
+        .then(data => {
+            req.user.userName = data.docs[0].data().userName;
+            return next();
+        })
+        .catch(err =>{
+            console.error('Error while verifying token ', err);
+            return res.status(403).json(err);
+        })
+}
+
 //Signup route
 let token, userId
 app.post('/signup', (req,res)=>{
@@ -111,34 +140,39 @@ app.get('/connections', (req, res) => {
         .catch(error => console.error);
 })
 
-//middleware authentication
-const FBAuth = (req, res, next) => {
-    let idToken;
-    if(req.headers.authorization && req.headers.authorization.startsWith('Bearer ')){
-        idToken = req.headers.authorization.split('Bearer ')[1]; //take second element which will be token
-    }else{
-        console.error('No token found')
-        return res.status(403).json({error: 'Unauthorized'});
-    }
+//TODO: get connection by recipient username..NEEDS FIXING ASAP
+// app.get('/connection', FBAuth, (req,res)=>{
+//     db.collection('connections').get()
+//         .then(snapShot =>{
+//             let recipientConnections = []
+//             snapShot.forEach(doc =>{
+//                 const details = {
+//                     recipt: doc.data().recipient.toString(),
+//                     curUser: req.body.userName
+//                 }
+//                 var result = details.recipt.localeCompare(details.curUser)
+//                 // let recipt = doc.data().recipient.toString();
+//                 // let curUser = req.body.userName;
+//                 console.log(doc.data().recipient)
+//                 console.log("user" + req.body.userName)
+                
+//                 if( result == 0){
+//                     console.log("here");
+//                     recipientConnections.push({
+//                         // ...doc.data()
+//                         result
+//                     });
+//                 }
+//             });
+//             return res.json(recipientConnections);
+//         })
+//         .catch(err =>{
+//             console.error(err)
+//             return res.status(500).json({error: `Error retrieving user's connections`})
+//         })
+// })
 
-    admin.auth().verifyIdToken(idToken)
-        .then(decodedToken => { //holds data thats inside token ie userDATA
-            req.user = decodedToken;
-            console.log(decodedToken)
-            return db.collection('users')
-                .where('userId', '==', req.user.uid)
-                .limit(1)
-                .get();
-        })
-        .then(data => {
-            req.user.userName = data.docs[0].data().userName;
-            return next();
-        })
-        .catch(err =>{
-            console.error('Error while verifying token ', err);
-            return res.status(403).json(err);
-        })
-}
+
 
 app.post('/connection', FBAuth, (req, res) => {
     const newConnection =  {
